@@ -5,13 +5,13 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 
-#define IMG_COUNT 6
-#define IMG_PATH "./element/PETS"
-//#define IMG_PATH "/data/dataset/track_img/Gym/img"
+#define IMG_COUNT 10
+//#define IMG_PATH "./element/Baby"
+#define IMG_PATH "/data/dataset/face/ATT/s2"
 
-#define COMPONENT_SIZE 5
+#define COMPONENT_SIZE 10
 
-#define ITER_COUNT 100
+#define ITER_COUNT 1000
 
 std::string numberToString(int number, unsigned int count_bytes)
 {
@@ -31,7 +31,7 @@ bool getImageSet(std::string path, int count, cv::Mat &imageSet, cv::Size &size)
 
   for (int i=0; i<count; i++)
   {
-    std::string img_path = path + "/" + numberToString(i+1, 1) + ".jpg";
+    std::string img_path = path + "/" + numberToString(i+1, 1) + ".pgm";
 	  cv::Mat image = cv::imread(img_path);
     if (image.empty())
     {
@@ -57,6 +57,25 @@ bool getImageSet(std::string path, int count, cv::Mat &imageSet, cv::Size &size)
   }
 
   return true;
+}
+
+void show_subimage(std::string caption, cv::Mat &mat, cv::Size &size)
+{
+
+  cv::Mat base_show;
+  for (int i=0; i<mat.cols; i++)
+  {
+    cv::Mat base_item= mat.col(i).clone();
+//    base_item.convertTo(base_item, CV_8U);
+    base_item = base_item.reshape(1, size.height);
+//    base_show.push_back(base_item);
+    cv::normalize(base_item, base_item, 0.0f, 1.0f, cv::NORM_MINMAX);
+    if (base_show.empty())
+      base_show = base_item;
+    else
+      cv::hconcat(base_show, base_item, base_show);
+  }
+  imshow(caption, base_show);
 }
 
 int main(int argc, char* argv[])
@@ -99,53 +118,17 @@ int main(int argc, char* argv[])
     cv::Mat trans_regular;
     for (int i=0; i<Trans.cols; i++)
     {
-      Trans.col(i) *= trans_sum.at<float>(i);
+//      Trans.col(i) *= trans_sum.at<float>(i);
     }
 
   }
 
-  cv::Mat base_show;
-  for (int i=0; i<Basis.cols; i++)
-  {
-    cv::Mat base_item= Basis.col(i).clone();
-//    base_item.convertTo(base_item, CV_8U);
-    base_item = base_item.reshape(1, imageSize.height);
-//    base_show.push_back(base_item);
-    cv::normalize(base_item, base_item, 0.0f, 1.0f, cv::NORM_MINMAX);
-    if (base_show.empty())
-      base_show = base_item;
-    else
-      cv::hconcat(base_show, base_item, base_show);
-  }
-  imshow("Basis", base_show);
+  show_subimage("Basis", Basis, imageSize);
 
   cv::Mat fit = Basis * Trans;
-  fit.convertTo(fit, CV_8U);
-  cv::Mat fit_show;
-  for (int i=0; i<fit.cols; i++)
-  {
-    cv::Mat fit_item = fit.col(i).clone();
-    fit_item = fit_item.reshape(1, imageSize.height);
-    //fit_show.push_back(fit_item);
-    if (fit_show.empty())
-      fit_show = fit_item;
-    else
-      cv::hconcat(fit_show, fit_item, fit_show);
-  }
-  imshow("Fit", fit_show);
+  show_subimage("Fit", fit, imageSize);
 
-  cv::Mat orig_show;
-  imageSet.convertTo(imageSet, CV_8U);
-  for (int i=0; i<fit.cols; i++)
-  {
-    cv::Mat orig_item = imageSet.col(i).clone();
-    orig_item = orig_item.reshape(1, imageSize.height);
-    if (orig_show.empty())
-      orig_show = orig_item;
-    else
-      cv::hconcat(orig_show, orig_item, orig_show);
-  }
-  imshow("Original", orig_show);
+  show_subimage("Origin", imageSet, imageSize);
 
   std::cout << "Trans:" << std::endl;
   std::cout << Trans << std::endl;
